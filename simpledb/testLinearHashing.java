@@ -37,6 +37,7 @@ public class testLinearHashing {
         idx.close();
         tx.commit();
 
+        //test for git
         // Transaction tx2 = new Transaction();
         // Plan testPlan = new TablePlan("messy", tx2);
         // TableScan testScan = (TableScan) testPlan.open();
