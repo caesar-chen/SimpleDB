@@ -22,10 +22,11 @@ public class HashIndex implements Index {
 	private TableScan ts = null;
 
     public ArrayList<ArrayList<Integer>> indexFile;
-    public ArrayList<Integer> recordList;
+    //public ArrayList<Integer> recordList;
     public ArrayList<Integer> overflow;
     public int level = 0;
     public int nextB = 0;
+    public int expandFlag = 0;
 
 	/**
 	 * Opens a hash index for the specified index.
@@ -37,10 +38,10 @@ public class HashIndex implements Index {
 		this.idxname = idxname;
 		this.sch = sch;
 		this.tx = tx;
-        indexFile = new ArrayList<ArrayList<Integer>>();
-        recordList = new ArrayList<Integer>();
+        indexFile = new ArrayList<ArrayList<Integer>>(Collections.nCopies(NUM_BUCKETS, new ArrayList<Integer>()));
+        //recordList = new ArrayList<Integer>();
         overflow = new ArrayList<Integer>();
-        indexFile.add(recordList);
+        //indexFile.set(0, recordList);
 	}
 
     /**
@@ -49,13 +50,14 @@ public class HashIndex implements Index {
      private void curState() {
          for (int i = 0; i < indexFile.size(); i++) {
              ArrayList<Integer> temp = indexFile.get(i);
+             if (temp.size() == 0) continue;
              System.out.println("Bucket # is " + i);
              System.out.println(Arrays.toString(temp.toArray()));
          }
-        //  System.out.println("Overflow for Bucket # ????");
-        //  System.out.println(Arrays.toString(overflow.toArray()));
-        //  System.out.println("value for Level is: " + level);
-        //  System.out.println("value for Next is: " + nextB);
+         System.out.println("Overflow for Bucket");
+         System.out.println(Arrays.toString(overflow.toArray()));
+         System.out.println("value for Level is: " + level);
+         System.out.println("value for Next is: " + nextB);
      }
 
 	/**
@@ -101,6 +103,26 @@ public class HashIndex implements Index {
 		return new RID(blknum, id);
 	}
 
+    /**
+	 * private helper method Power of 2
+	 */
+     private int pow(int val) {
+         int result = 2;
+         if (val == 0) return 1;
+         for (int i = 1; i < val; i++) {
+             result *= 2;
+         }
+         return result;
+     }
+
+     /**
+ 	 * private helper method expand
+ 	 */
+     private void expand() {
+         ArrayList<Integer> expandBucket = new ArrayList<Integer>();
+
+     }
+
 	/**
 	 * Inserts a new record into the table scan for the bucket.
 	 * @see simpledb.index.Index#insert(simpledb.query.Constant, simpledb.record.RID)
@@ -112,13 +134,31 @@ public class HashIndex implements Index {
 		ts.setInt("id", rid.id());
 		ts.setVal("dataval", val);
 
-        if (recordList.size() == 5) {
-            recordList = new ArrayList<Integer>();
-            indexFile.add(recordList);
+        int insertValue = (int)((IntConstant)val).asJavaVal();
+        int insertBucket = insertValue % (pow(level));
+        if (insertBucket < nextB) {
+            insertBucket = insertValue % (pow(level + 1));
         }
-        int t = (int)((IntConstant)val).asJavaVal();
-        recordList.add(t);
-		curState();
+
+        ArrayList<Integer> loc = indexFile.get(insertBucket);
+        if (loc.size() < 5) {
+            loc.add(insertValue);
+        } else {
+            overflow.add(insertValue);
+            expandFlag = 1;
+            System.out.println("Before expand");
+            curState();
+            System.out.println("After expand");
+            expand();
+            curState();
+        }
+
+        // if (recordList.size() == 5) {
+        //     recordList = new ArrayList<Integer>();
+        //     indexFile.add(recordList);
+        // }
+        // recordList.add(insertValue);
+		// curState();
 	}
 
 	/**
