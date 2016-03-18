@@ -4,6 +4,8 @@ import simpledb.tx.Transaction;
 import simpledb.record.*;
 import simpledb.query.*;
 import simpledb.index.Index;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A static hash implementation of the Index interface.
@@ -19,6 +21,12 @@ public class HashIndex implements Index {
 	private Constant searchkey = null;
 	private TableScan ts = null;
 
+    public ArrayList<ArrayList<Integer>> indexFile;
+    public ArrayList<Integer> recordList;
+    public ArrayList<Integer> overflow;
+    public int level = 0;
+    public int nextB = 0;
+
 	/**
 	 * Opens a hash index for the specified index.
 	 * @param idxname the name of the index
@@ -29,7 +37,26 @@ public class HashIndex implements Index {
 		this.idxname = idxname;
 		this.sch = sch;
 		this.tx = tx;
+        indexFile = new ArrayList<ArrayList<Integer>>();
+        recordList = new ArrayList<Integer>();
+        overflow = new ArrayList<Integer>();
+        indexFile.add(recordList);
 	}
+
+    /**
+	 * Private helper method to print current state.
+	 */
+     private void curState() {
+         for (int i = 0; i < indexFile.size(); i++) {
+             ArrayList<Integer> temp = indexFile.get(i);
+             System.out.println("Bucket # is " + i);
+             System.out.println(Arrays.toString(temp.toArray()));
+         }
+        //  System.out.println("Overflow for Bucket # ????");
+        //  System.out.println(Arrays.toString(overflow.toArray()));
+        //  System.out.println("value for Level is: " + level);
+        //  System.out.println("value for Next is: " + nextB);
+     }
 
 	/**
 	 * Positions the index before the first index record
@@ -84,7 +111,14 @@ public class HashIndex implements Index {
 		ts.setInt("block", rid.blockNumber());
 		ts.setInt("id", rid.id());
 		ts.setVal("dataval", val);
-		System.out.println("Value is " + val + " And rid is " + rid);
+
+        if (recordList.size() == 5) {
+            recordList = new ArrayList<Integer>();
+            indexFile.add(recordList);
+        }
+        int t = (int)((IntConstant)val).asJavaVal();
+        recordList.add(t);
+		curState();
 	}
 
 	/**
