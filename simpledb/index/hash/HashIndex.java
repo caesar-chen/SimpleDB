@@ -6,6 +6,8 @@ import simpledb.query.*;
 import simpledb.index.Index;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * A static hash implementation of the Index interface.
@@ -26,7 +28,6 @@ public class HashIndex implements Index {
     public ArrayList<Integer> overflow;
     public int level = 0;
     public int nextB = 0;
-    public int expandFlag = 0;
 
 	/**
 	 * Opens a hash index for the specified index.
@@ -38,7 +39,11 @@ public class HashIndex implements Index {
 		this.idxname = idxname;
 		this.sch = sch;
 		this.tx = tx;
-        indexFile = new ArrayList<ArrayList<Integer>>(Collections.nCopies(NUM_BUCKETS, new ArrayList<Integer>()));
+        // indexFile = new ArrayList<ArrayList<Integer>>(Collections.nCopies(NUM_BUCKETS, new ArrayList<Integer>()));
+        indexFile = new ArrayList<ArrayList<Integer>>(NUM_BUCKETS);
+        for (int i = 0; i < 100; i++) {
+            indexFile.add(new ArrayList<Integer>());
+        }
         //recordList = new ArrayList<Integer>();
         overflow = new ArrayList<Integer>();
         //indexFile.set(0, recordList);
@@ -118,9 +123,47 @@ public class HashIndex implements Index {
      /**
  	 * private helper method expand
  	 */
-     private void expand() {
+     private void expand(int overBucket, int overVal) {
+         ArrayList<Integer> oldBucket = indexFile.get(nextB);
          ArrayList<Integer> expandBucket = new ArrayList<Integer>();
+         int newLoc = nextB + pow(level);
 
+        //  System.out.println("before");
+        //  System.out.println(Arrays.toString(oldBucket.toArray()));
+        //  System.out.println(Arrays.toString(expandBucket.toArray()));
+
+         ArrayList<Integer> total = new ArrayList<Integer>(oldBucket);
+         if (overBucket == nextB) {
+             total.addAll(overflow);
+         }
+
+        //  System.out.println(Arrays.toString(total.toArray()));
+
+         oldBucket.clear();
+         for (int i : total) {
+             if ((i % pow(level + 1)) == nextB) {
+                 oldBucket.add(i);
+             } else {
+                 expandBucket.add(i);
+             }
+         }
+
+        //  System.out.println("after");
+        //  System.out.println(Arrays.toString(oldBucket.toArray()));
+        //  System.out.println(Arrays.toString(expandBucket.toArray()));
+
+
+         indexFile.set(newLoc, expandBucket);
+
+         nextB = (nextB + 1) % pow(level);
+         if (nextB == 0) level = level + 1;
+         for (Iterator<Integer> iterator = overflow.iterator(); iterator.hasNext();) {
+            int cur = iterator.next();
+            if (oldBucket.contains(cur) || expandBucket.contains(cur)) {
+                // Remove the current element from the iterator and the list.
+                iterator.remove();
+            }
+        }
      }
 
 	/**
@@ -139,19 +182,22 @@ public class HashIndex implements Index {
         if (insertBucket < nextB) {
             insertBucket = insertValue % (pow(level + 1));
         }
-
+        //System.out.println(insertBucket);
         ArrayList<Integer> loc = indexFile.get(insertBucket);
+        // System.out.println("before");
+        // System.out.println(Arrays.toString(loc.toArray()));
         if (loc.size() < 5) {
             loc.add(insertValue);
         } else {
             overflow.add(insertValue);
-            expandFlag = 1;
             System.out.println("Before expand");
             curState();
             System.out.println("After expand");
-            expand();
+            expand(insertBucket, insertValue);
             curState();
         }
+        // System.out.println("after");
+        // System.out.println(Arrays.toString(loc.toArray()));
 
         // if (recordList.size() == 5) {
         //     recordList = new ArrayList<Integer>();
