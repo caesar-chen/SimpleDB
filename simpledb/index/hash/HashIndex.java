@@ -24,6 +24,7 @@ public class HashIndex implements Index {
 	private TableScan ts = null;
 
     public ArrayList<ArrayList<Integer>> indexFile;
+    public static int bucketCount = 0;
     public int level = 0;
     public int nextB = 0;
 
@@ -37,7 +38,8 @@ public class HashIndex implements Index {
 		this.idxname = idxname;
 		this.sch = sch;
 		this.tx = tx;
-        // indexFile = new ArrayList<ArrayList<Integer>>(Collections.nCopies(NUM_BUCKETS, new ArrayList<Integer>()));
+        // indexfile is a debug purpose arraylist which has the same
+        // state as the index file, it can help to print out the state
         indexFile = new ArrayList<ArrayList<Integer>>(NUM_BUCKETS);
         for (int i = 0; i < 100; i++) {
             indexFile.add(new ArrayList<Integer>());
@@ -52,6 +54,7 @@ public class HashIndex implements Index {
              ArrayList<Integer> temp = indexFile.get(i);
              if (temp.size() == 0) continue;
              System.out.println("Bucket # is " + i);
+             bucketCount = i + 1;
              System.out.print("[ ");
              for (int k = 0; k < temp.size(); k++) {
                  if (k < 5) {
@@ -72,6 +75,7 @@ public class HashIndex implements Index {
          }
          System.out.println("value for Level is: " + level);
          System.out.println("value for Next is: " + nextB);
+         System.out.println("Total bucket is: " + bucketCount);
      }
 
 	/**
@@ -140,24 +144,13 @@ public class HashIndex implements Index {
      private void expand(int overBucket, Constant overVal, ArrayList<Integer> loc) {
          ArrayList<Integer> oldBucket = indexFile.get(nextB);
          ArrayList<Integer> expandBucket = new ArrayList<Integer>();
-         ArrayList<Integer> overflowElements = new ArrayList<Integer>();
-         for (int i = 5; i < loc.size(); i++) {
-             overflowElements.add(loc.get(i));
-         }
          int newLoc = nextB + pow(level);
 
         //  System.out.println("before");
         //  System.out.println(Arrays.toString(oldBucket.toArray()));
         //  System.out.println(Arrays.toString(expandBucket.toArray()));
-        //  System.out.println(Arrays.toString(overflowElements.toArray()));
 
          ArrayList<Integer> total = new ArrayList<Integer>(oldBucket);
-        //  if (overBucket == nextB) {
-        //      total.addAll(overflowElements);
-        //  }
-
-        //  System.out.println(Arrays.toString(total.toArray()));
-
          oldBucket.clear();
          for (int i : total) {
              if ((i % pow(level + 1)) == nextB) {
@@ -170,21 +163,10 @@ public class HashIndex implements Index {
         //  System.out.println("after");
         //  System.out.println(Arrays.toString(oldBucket.toArray()));
         //  System.out.println(Arrays.toString(expandBucket.toArray()));
-        //  System.out.println(Arrays.toString(overflowElements.toArray()));
-
 
          indexFile.set(newLoc, expandBucket);
-
          nextB = (nextB + 1) % pow(level);
          if (nextB == 0) level = level + 1;
-        //  for (Iterator<Integer> iterator = loc.iterator(); iterator.hasNext();) {
-        //     int cur = iterator.next();
-        //     if (overflowElements.contains(cur)) {
-        //         if (oldBucket.contains(cur) || expandBucket.contains(cur)) {
-        //             iterator.remove();
-        //         }
-        //     }
-        // }
      }
 
 	/**
@@ -203,10 +185,11 @@ public class HashIndex implements Index {
         if (insertBucket < nextB) {
             insertBucket = insertValue % (pow(level + 1));
         }
-        //System.out.println(insertBucket);
         ArrayList<Integer> loc = indexFile.get(insertBucket);
+
         // System.out.println("before");
         // System.out.println(Arrays.toString(loc.toArray()));
+
         loc.add(insertValue);
         if (loc.size() > 5) {
             System.out.println("Before expand");
@@ -215,10 +198,10 @@ public class HashIndex implements Index {
             expand(insertBucket, val, loc);
             curState();
         }
+
         // System.out.println("after");
         // System.out.println(Arrays.toString(loc.toArray()));
 
-		// curState();
 	}
 
 	/**
@@ -257,6 +240,6 @@ public class HashIndex implements Index {
 	 * @return the cost of traversing the index
 	 */
 	public static int searchCost(int numblocks, int rpb){
-		return numblocks / HashIndex.NUM_BUCKETS;
+		return numblocks / bucketCount;
 	}
 }
