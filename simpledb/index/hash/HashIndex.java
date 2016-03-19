@@ -23,6 +23,7 @@ public class HashIndex implements Index {
 	private TableScan ts = null;
 
     public ArrayList<ArrayList<Integer>> indexFile;
+    public int count = 1;
     public static int bucketCount = 0;
     public int level = 0;
     public int nextB = 0;
@@ -140,7 +141,7 @@ public class HashIndex implements Index {
      /**
  	 * private helper method expand
  	 */
-     private void expand(int overBucket, Constant overVal, RID rid, ArrayList<Integer> loc) {
+     private void expand(int overBucket, Constant overVal, RID rid) {
          ArrayList<Integer> oldBucket = indexFile.get(nextB);
          ArrayList<Integer> expandBucket = new ArrayList<Integer>();
          int newLoc = nextB + pow(level);
@@ -156,7 +157,8 @@ public class HashIndex implements Index {
          TableScan oldIndex = new TableScan(ti1, tx);
          oldIndex.beforeFirst();
          // intermediate bucket
-         tblname = idxname + "Backup" + nextB;
+         tblname = idxname + "Backup" + count;
+         count++;
          TableInfo ti2 = new TableInfo(tblname, sch);
          TableScan intIndex = new TableScan(ti2, tx);
          intIndex.beforeFirst();
@@ -228,6 +230,7 @@ public class HashIndex implements Index {
 		ts.setInt("id", rid.id());
 		ts.setVal("dataval", val);
         //System.out.println(ts.getName());
+        ts.close();
 
         int insertValue = (int)((IntConstant)val).asJavaVal();
         int insertBucket = insertValue % (pow(level));
@@ -244,7 +247,7 @@ public class HashIndex implements Index {
             //System.out.println("Before expand");
             //curState();
             //System.out.println("After expand");
-            expand(insertBucket, val, rid, loc);
+            expand(insertBucket, val, rid);
             //curState();
         }
 
@@ -296,8 +299,6 @@ public class HashIndex implements Index {
 	 * helper to print the final state
 	 */
     public void finalState() {
-        System.out.println("hel;llo!!!!");
-        //System.out.println(bucketCount);
         for (int i = 0; i < 4; i++) {
             String tblname = idxname + i;
     		TableInfo ti = new TableInfo(tblname, sch);
