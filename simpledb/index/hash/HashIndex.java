@@ -6,7 +6,6 @@ import simpledb.query.*;
 import simpledb.index.Index;
 import java.util.ArrayList;
 import java.util.Arrays;
-//import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -141,10 +140,55 @@ public class HashIndex implements Index {
      /**
  	 * private helper method expand
  	 */
-     private void expand(int overBucket, Constant overVal, ArrayList<Integer> loc) {
+     private void expand(int overBucket, Constant overVal, RID rid, ArrayList<Integer> loc) {
          ArrayList<Integer> oldBucket = indexFile.get(nextB);
          ArrayList<Integer> expandBucket = new ArrayList<Integer>();
          int newLoc = nextB + pow(level);
+
+         // new bucket
+         String tblname = idxname + newLoc;
+         TableInfo ti = new TableInfo(tblname, sch);
+         TableScan newIndex = new TableScan(ti, tx);
+         newIndex.beforeFirst();
+         // old bucket
+         tblname = idxname + nextB;
+         TableInfo ti1 = new TableInfo(tblname, sch);
+         TableScan oldIndex = new TableScan(ti1, tx);
+         oldIndex.beforeFirst();
+         // intermediate bucket
+         tblname = idxname + "Backup" + nextB;
+         TableInfo ti2 = new TableInfo(tblname, sch);
+         TableScan intIndex = new TableScan(ti2, tx);
+         intIndex.beforeFirst();
+         // copy old content in the new
+         while (oldIndex.next()) {
+            intIndex.insert();
+     		intIndex.setInt("block", oldIndex.getInt("block"));
+     		intIndex.setInt("id", oldIndex.getInt("id"));
+     		intIndex.setVal("dataval", oldIndex.getVal("dataval"));
+         }
+         // clear old content
+         oldIndex.beforeFirst();
+         while (oldIndex.next()) {
+             oldIndex.delete();
+         }
+         // begin redistribute
+         oldIndex.beforeFirst();
+         intIndex.beforeFirst();
+         while (intIndex.next()) {
+             int val = (int)((IntConstant)(intIndex.getVal("dataval"))).asJavaVal();
+             if ((val % pow(level + 1)) == nextB) {
+                oldIndex.insert();
+          		oldIndex.setInt("block", intIndex.getInt("block"));
+          		oldIndex.setInt("id", intIndex.getInt("id"));
+          		oldIndex.setVal("dataval", intIndex.getVal("dataval"));
+             } else {
+                newIndex.insert();
+           		newIndex.setInt("block", intIndex.getInt("block"));
+           		newIndex.setInt("id", intIndex.getInt("id"));
+           		newIndex.setVal("dataval", intIndex.getVal("dataval"));
+             }
+         }
 
         //  System.out.println("before");
         //  System.out.println(Arrays.toString(oldBucket.toArray()));
@@ -167,6 +211,10 @@ public class HashIndex implements Index {
          indexFile.set(newLoc, expandBucket);
          nextB = (nextB + 1) % pow(level);
          if (nextB == 0) level = level + 1;
+
+         newIndex.close();
+         oldIndex.close();
+         intIndex.close();
      }
 
 	/**
@@ -179,6 +227,7 @@ public class HashIndex implements Index {
 		ts.setInt("block", rid.blockNumber());
 		ts.setInt("id", rid.id());
 		ts.setVal("dataval", val);
+        //System.out.println(ts.getName());
 
         int insertValue = (int)((IntConstant)val).asJavaVal();
         int insertBucket = insertValue % (pow(level));
@@ -192,11 +241,11 @@ public class HashIndex implements Index {
 
         loc.add(insertValue);
         if (loc.size() > 5) {
-            System.out.println("Before expand");
-            curState();
-            System.out.println("After expand");
-            expand(insertBucket, val, loc);
-            curState();
+            //System.out.println("Before expand");
+            //curState();
+            //System.out.println("After expand");
+            expand(insertBucket, val, rid, loc);
+            //curState();
         }
 
         // System.out.println("after");
@@ -242,4 +291,27 @@ public class HashIndex implements Index {
 	public static int searchCost(int numblocks, int rpb){
 		return numblocks / bucketCount;
 	}
+
+    /**
+	 * helper to print the final state
+	 */
+    public void finalState() {
+        System.out.println("hel;llo!!!!");
+        //System.out.println(bucketCount);
+        for (int i = 0; i < 4; i++) {
+            String tblname = idxname + i;
+    		TableInfo ti = new TableInfo(tblname, sch);
+    		TableScan b = new TableScan(ti, tx);
+            System.out.println(b.getName());
+            b.beforeFirst();
+            while (b.next()) {
+                System.out.println((b.getVal("dataval")).asJavaVal());
+            }
+            b.close();
+            System.out.println("   ");
+        }
+        System.out.println("value for Level is: " + level);
+        System.out.println("value for Next is: " + nextB);
+    }
+
 }

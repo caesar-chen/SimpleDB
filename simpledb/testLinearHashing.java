@@ -33,6 +33,7 @@ public class testLinearHashing {
         while (s.next()) {
             idx.insert(s.getVal("col1"), s.getRid());
         }
+        ((HashIndex) idx).finalState();
         s.close();
         idx.close();
         tx.commit();
@@ -41,7 +42,7 @@ public class testLinearHashing {
         // Plan testPlan = new TablePlan("messy", tx2);
         // TableScan testScan = (TableScan) testPlan.open();
         // Index testIdx = new HashIndex("hashIdxTest", idxsch, tx2);
-        // testIdx.beforeFirst(new IntConstant(110));
+        // testIdx.beforeFirst(new IntConstant(107));
         // testIdx.next();
         // RID dataRid = testIdx.getDataRid();
         // testScan.moveToRid(dataRid);
