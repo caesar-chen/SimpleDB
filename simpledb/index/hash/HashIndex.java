@@ -82,7 +82,7 @@ public class HashIndex implements Index {
  	 * helper to print the final state
  	 */
      public void finalState() {
-         for (int i = 0; i < 4; i++) {
+         for (int i = 0; i < bucketCount; i++) {
             String tblname = idxname + i;
      		TableInfo ti = new TableInfo(tblname, sch);
      		TableScan b = new TableScan(ti, tx);
@@ -283,10 +283,11 @@ public class HashIndex implements Index {
         if (loc.size() > 5) {
             System.out.println(" ");
             System.out.println("Before expand");
-            //curState();
+            curState();
             System.out.println("After expand");
             expand(insertBucket, val, rid);
-            //curState();
+            curState();
+            System.out.println(" ");
         }
 
         // System.out.println("after");

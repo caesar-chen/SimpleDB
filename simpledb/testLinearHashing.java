@@ -28,7 +28,7 @@ public class testLinearHashing {
         idxsch.addIntField("id");
         // Builds a Linear Hash Index on Col1 of the messy table
         Index idx = new HashIndex("hashIdxTest", idxsch, tx);
-        Plan p = new TablePlan("messy", tx);
+        Plan p = new TablePlan("tt", tx);
         UpdateScan s = (UpdateScan) p.open();
         while (s.next()) {
             idx.insert(s.getVal("col1"), s.getRid());
@@ -41,16 +41,21 @@ public class testLinearHashing {
             try {
                 int toFind = Integer.parseInt(args[i]);
                 idx.beforeFirst(new IntConstant(toFind));
-                idx.next();
-                RID dataRid = idx.getDataRid();
-                testScan.moveToRid(dataRid);
-                System.out.println(testScan.getString("col2"));
+                boolean flag = idx.next();
+                if (flag == true) {
+                    RID dataRid = idx.getDataRid();
+                    testScan.moveToRid(dataRid);
+                    System.out.println(testScan.getString("col2"));
+                } else {
+                    System.out.println("No associated data, print the key: " + toFind);
+                }
             } catch (NumberFormatException e) {
                 System.err.println("Argument" + args[i] + " must be an integer.");
                 System.exit(1);
             }
         }
         testScan.close();
+
         idx.close();
         tx.commit();
     }
