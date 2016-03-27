@@ -35,20 +35,23 @@ public class testLinearHashing {
         }
         ((HashIndex) idx).finalState();
         s.close();
+
+        TableScan testScan = (TableScan) p.open();
+        for (int i = 0; i < args.length; i++) {
+            try {
+                int toFind = Integer.parseInt(args[i]);
+                idx.beforeFirst(new IntConstant(toFind));
+                idx.next();
+                RID dataRid = idx.getDataRid();
+                testScan.moveToRid(dataRid);
+                System.out.println(testScan.getString("col2"));
+            } catch (NumberFormatException e) {
+                System.err.println("Argument" + args[i] + " must be an integer.");
+                System.exit(1);
+            }
+        }
+        testScan.close();
         idx.close();
         tx.commit();
-        //
-        // Transaction tx2 = new Transaction();
-        // Plan testPlan = new TablePlan("messy", tx2);
-        // TableScan testScan = (TableScan) testPlan.open();
-        // Index testIdx = new HashIndex("hashIdxTest", idxsch, tx2);
-        // testIdx.beforeFirst(new IntConstant(107));
-        // testIdx.next();
-        // RID dataRid = testIdx.getDataRid();
-        // testScan.moveToRid(dataRid);
-        // System.out.println(testScan.getString("col2"));
-        // testScan.close();
-        // testIdx.close();
-        // tx2.commit();
     }
 }

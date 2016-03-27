@@ -78,6 +78,26 @@ public class HashIndex implements Index {
          System.out.println("Total bucket is: " + bucketCount);
      }
 
+     /**
+ 	 * helper to print the final state
+ 	 */
+     public void finalState() {
+         for (int i = 0; i < 4; i++) {
+            String tblname = idxname + i;
+     		TableInfo ti = new TableInfo(tblname, sch);
+     		TableScan b = new TableScan(ti, tx);
+             System.out.println(b.getName());
+             b.beforeFirst();
+             while (b.next()) {
+                 System.out.println((b.getVal("dataval")).asJavaVal());
+             }
+             b.close();
+             System.out.println("   ");
+         }
+         System.out.println("value for Level is: " + level);
+         System.out.println("value for Next is: " + nextB);
+     }
+
 	/**
 	 * Positions the index before the first index record
 	 * having the specified search key.
@@ -92,13 +112,26 @@ public class HashIndex implements Index {
         this.searchkey = searchkey;
         // get the real location
         int insertValue = (int)((IntConstant)searchkey).asJavaVal();
+
+        // System.out.println("!!!!!!!!");
+        // System.out.println(insertValue);
+        // System.out.println("level is "+level);
+
         int insertBucket = insertValue % (pow(level));
+
+        //System.out.println("old insertBucket " + insertBucket);
+
         if (insertBucket < nextB) {
             insertBucket = insertValue % (pow(level + 1));
         }
+
+        //System.out.println("new insertBucket " + insertBucket);
+
 		String tblname = idxname + insertBucket;
 		TableInfo ti = new TableInfo(tblname, sch);
 		ts = new TableScan(ti, tx);
+        // System.out.println("the table name is " + tblname);
+        // System.out.println("?????????");
 	}
 
 	/**
@@ -109,9 +142,13 @@ public class HashIndex implements Index {
 	 * @see simpledb.index.Index#next()
 	 */
 	public boolean next() {
-		while (ts.next())
-			if (ts.getVal("dataval").equals(searchkey))
-				return true;
+		while (ts.next()) {
+            if (ts.getVal("dataval").equals(searchkey)) {
+                //System.out.println("find you!!!");
+                return true;
+            }
+        }
+        //System.out.println("cant find");
 		return false;
 	}
 
@@ -145,6 +182,7 @@ public class HashIndex implements Index {
          ArrayList<Integer> oldBucket = indexFile.get(nextB);
          ArrayList<Integer> expandBucket = new ArrayList<Integer>();
          int newLoc = nextB + pow(level);
+         if (newLoc + 1 > bucketCount) bucketCount = newLoc + 1;
 
          // new bucket
          String tblname = idxname + newLoc;
@@ -229,7 +267,6 @@ public class HashIndex implements Index {
 		ts.setInt("block", rid.blockNumber());
 		ts.setInt("id", rid.id());
 		ts.setVal("dataval", val);
-        //System.out.println(ts.getName());
         ts.close();
 
         int insertValue = (int)((IntConstant)val).asJavaVal();
@@ -244,9 +281,10 @@ public class HashIndex implements Index {
 
         loc.add(insertValue);
         if (loc.size() > 5) {
-            //System.out.println("Before expand");
+            System.out.println(" ");
+            System.out.println("Before expand");
             //curState();
-            //System.out.println("After expand");
+            System.out.println("After expand");
             expand(insertBucket, val, rid);
             //curState();
         }
@@ -294,25 +332,5 @@ public class HashIndex implements Index {
 	public static int searchCost(int numblocks, int rpb){
 		return numblocks / bucketCount;
 	}
-
-    /**
-	 * helper to print the final state
-	 */
-    public void finalState() {
-        for (int i = 0; i < 4; i++) {
-            String tblname = idxname + i;
-    		TableInfo ti = new TableInfo(tblname, sch);
-    		TableScan b = new TableScan(ti, tx);
-            System.out.println(b.getName());
-            b.beforeFirst();
-            while (b.next()) {
-                System.out.println((b.getVal("dataval")).asJavaVal());
-            }
-            b.close();
-            System.out.println("   ");
-        }
-        System.out.println("value for Level is: " + level);
-        System.out.println("value for Next is: " + nextB);
-    }
 
 }
