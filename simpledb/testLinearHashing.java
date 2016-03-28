@@ -28,12 +28,12 @@ public class testLinearHashing {
         idxsch.addIntField("id");
         // Builds a Linear Hash Index on Col1 of the messy table
         Index idx = new HashIndex("hashIdxTest", idxsch, tx);
-        Plan p = new TablePlan("tt", tx);
+        Plan p = new TablePlan("messy", tx);
         UpdateScan s = (UpdateScan) p.open();
         while (s.next()) {
             idx.insert(s.getVal("col1"), s.getRid());
         }
-        ((HashIndex) idx).finalState();
+        //((HashIndex) idx).finalState();
         s.close();
 
         TableScan testScan = (TableScan) p.open();
@@ -57,6 +57,6 @@ public class testLinearHashing {
         testScan.close();
 
         idx.close();
-        tx.commit();
+        tx.rollback();
     }
 }

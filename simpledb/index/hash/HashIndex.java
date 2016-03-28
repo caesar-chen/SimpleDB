@@ -75,7 +75,7 @@ public class HashIndex implements Index {
          }
          System.out.println("value for Level is: " + level);
          System.out.println("value for Next is: " + nextB);
-         System.out.println("Total bucket is: " + bucketCount);
+         //System.out.println("Total bucket is: " + bucketCount);
      }
 
      /**
