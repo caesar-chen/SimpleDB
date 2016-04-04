@@ -17,6 +17,7 @@ public class SortPlan implements Plan {
    private RecordComparator comp;
    //counter for merge Iteration
    private int count = 0;
+   private int k;
 
    /**
     * Creates a sort plan for the specified query.
@@ -24,10 +25,11 @@ public class SortPlan implements Plan {
     * @param sortfields the fields to sort by
     * @param tx the calling transaction
     */
-   public SortPlan(Plan p, List<String> sortfields, Transaction tx) {
+   public SortPlan(Plan p, List<String> sortfields, Transaction tx, int kruns) {
       this.p = p;
       this.tx = tx;
       sch = p.schema();
+      k = kruns;
       comp = new RecordComparator(sortfields);
    }
 
@@ -42,7 +44,7 @@ public class SortPlan implements Plan {
       Scan src = p.open();
       List<TempTable> runs = splitIntoRuns(src);
       src.close();
-      while (runs.size() > 2) {
+      while (runs.size() > k) {
           count++;
           System.out.println("********************************");
           System.out.println("Merge Iteration " + count);
@@ -137,10 +139,22 @@ public class SortPlan implements Plan {
 
    private List<TempTable> doAMergeIteration(List<TempTable> runs) {
       List<TempTable> result = new ArrayList<TempTable>();
-      while (runs.size() > 1) { // at least two runs
+      while (runs.size() > (k - 1)) { // at least k-1 runs
          TempTable p1 = runs.remove(0);
          TempTable p2 = runs.remove(0);
-         TempTable addMe = mergeTwoRuns(p1, p2);
+         TempTable addMe;
+
+         if (k == 2) {
+             addMe = mergeTwoRuns(p1, p2);
+         } else if (k == 3) {
+             TempTable p3 = runs.remove(0);
+             addMe = mergeTwoRuns(mergeTwoRuns(p1, p2), p3);
+         } else {
+             TempTable p4 = runs.remove(0);
+             TempTable p5 = runs.remove(0);
+             addMe = mergeTwoRuns(mergeTwoRuns(p1, p2), mergeTwoRuns(p4, p5));
+         }
+
          result.add(addMe);
          // print the merged runs
          System.out.println("Merged Run");
@@ -153,10 +167,29 @@ public class SortPlan implements Plan {
          System.out.println(" ");
          currentscan.close();
       }
-      // add the last one
-      if (runs.size() == 1) {
-          TempTable theFirst = runs.get(0);
+      // add the last fews
+    //   if (runs.size() < k && runs.size() > 0) {
+      if (runs.size() > 0) {
+          TempTable theFirst;
+
+          if (runs.size() == 1) {
+              theFirst = runs.get(0);
+          } else if (runs.size() == 2) {
+            //   System.out.println("DEGUB: ");
+            //   System.out.println(runs.size());
+            //   System.out.println(" ");
+              TempTable tp1 = runs.remove(0);
+              TempTable tp2 = runs.remove(0);
+              theFirst = mergeTwoRuns(tp1, tp2);
+          } else {
+              TempTable ttp1 = runs.remove(0);
+              TempTable ttp2 = runs.remove(0);
+              TempTable ttemp = mergeTwoRuns(ttp1, ttp2);
+              TempTable ttp3 = runs.remove(0);
+              theFirst = mergeTwoRuns(ttemp, ttp3);
+          }
           result.add(theFirst);
+          //print statement
           System.out.println("Merged Run");
           UpdateScan lastScan = theFirst.open();
           lastScan.beforeFirst();

@@ -33,8 +33,7 @@ public class mergeTest {
         System.out.println("Begin MERGE SORT Test With " + nruns + " Run Merging");
         System.out.println(" ");
 
-        // Plan p2 = new SortPlan(p1, sf, tx, nruns);
-        Plan p2 = new SortPlan(p1, sf, tx);
+        Plan p2 = new SortPlan(p1, sf, tx, nruns);
         Scan s2 = p2.open();
 
         System.out.println(" ");
