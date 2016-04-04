@@ -15,6 +15,8 @@ public class SortPlan implements Plan {
    private Transaction tx;
    private Schema sch;
    private RecordComparator comp;
+   //counter for merge Iteration
+   private int count = 0;
 
    /**
     * Creates a sort plan for the specified query.
@@ -40,8 +42,14 @@ public class SortPlan implements Plan {
       Scan src = p.open();
       List<TempTable> runs = splitIntoRuns(src);
       src.close();
-      while (runs.size() > 2)
-         runs = doAMergeIteration(runs);
+      while (runs.size() > 2) {
+          count++;
+          System.out.println("********************************");
+          System.out.println("Merge Iteration " + count);
+          System.out.println("Number of Runs to be Merged is " + runs.size());
+          System.out.println(" ");
+          runs = doAMergeIteration(runs);
+      }
       return new SortScan(runs, comp);
    }
 
@@ -93,7 +101,7 @@ public class SortPlan implements Plan {
       if (!src.next()) {
           return temps;
       }
-      System.out.println("Start A New Run");
+      System.out.println("Starting A New Run");
       TempTable currenttemp = new TempTable(sch, tx);
       temps.add(currenttemp);
       UpdateScan currentscan = currenttemp.open();
@@ -102,7 +110,8 @@ public class SortPlan implements Plan {
               // print out the old contents
               currentscan.beforeFirst();
               while (currentscan.next()) {
-                  System.out.println(currentscan.getVal("col1"));
+                  System.out.println(currentscan.getVal("col2") +
+                    " "+ currentscan.getVal("col1"));
               }
               System.out.println(" ");
               // start a new run
@@ -116,23 +125,48 @@ public class SortPlan implements Plan {
       // print the very last run's contents
       currentscan.beforeFirst();
       while (currentscan.next()) {
-          System.out.println(currentscan.getVal("col1"));
+          System.out.println(currentscan.getVal("col2") +
+            " " + currentscan.getVal("col1"));
       }
       System.out.println(" ");
       currentscan.close();
       System.out.println("Number of Runs is " + temps.size());
+      System.out.println(" ");
       return temps;
    }
 
    private List<TempTable> doAMergeIteration(List<TempTable> runs) {
       List<TempTable> result = new ArrayList<TempTable>();
-      while (runs.size() > 1) {
+      while (runs.size() > 1) { // at least two runs
          TempTable p1 = runs.remove(0);
          TempTable p2 = runs.remove(0);
-         result.add(mergeTwoRuns(p1, p2));
+         TempTable addMe = mergeTwoRuns(p1, p2);
+         result.add(addMe);
+         // print the merged runs
+         System.out.println("Merged Run");
+         UpdateScan currentscan = addMe.open();
+         currentscan.beforeFirst();
+         while (currentscan.next()) {
+             System.out.println(currentscan.getVal("col2") +
+                " " + currentscan.getVal("col1"));
+         }
+         System.out.println(" ");
+         currentscan.close();
       }
-      if (runs.size() == 1)
-         result.add(runs.get(0));
+      // add the last one
+      if (runs.size() == 1) {
+          TempTable theFirst = runs.get(0);
+          result.add(theFirst);
+          System.out.println("Merged Run");
+          UpdateScan lastScan = theFirst.open();
+          lastScan.beforeFirst();
+          while (lastScan.next()) {
+              System.out.println(lastScan.getVal("col2") +
+              " " + lastScan.getVal("col1"));
+          }
+          System.out.println(" ");
+          lastScan.close();
+      }
       return result;
    }
 
