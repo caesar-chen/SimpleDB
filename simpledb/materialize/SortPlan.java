@@ -46,7 +46,7 @@ public class SortPlan implements Plan {
       src.close();
       while (runs.size() > k) {
           count++;
-          System.out.println("********************************");
+          System.out.println("*********************************");
           System.out.println("Merge Iteration " + count);
           System.out.println("Number of Runs to be Merged is " + runs.size());
           System.out.println(" ");
@@ -173,7 +173,6 @@ public class SortPlan implements Plan {
          currentscan.close();
       }
       // add the last fews
-    //   if (runs.size() < k && runs.size() > 0) {
       if (runs.size() > 0) {
           TempTable theFirst;
 
@@ -189,9 +188,8 @@ public class SortPlan implements Plan {
           } else {
               TempTable ttp1 = runs.remove(0);
               TempTable ttp2 = runs.remove(0);
-              TempTable ttemp = mergeTwoRuns(ttp1, ttp2);
               TempTable ttp3 = runs.remove(0);
-              theFirst = mergeTwoRuns(ttemp, ttp3);
+              theFirst = mergeTwoRuns(mergeTwoRuns(ttp1, ttp2), ttp3);
           }
           result.add(theFirst);
           //print statement
