@@ -52,6 +52,9 @@ public class SortPlan implements Plan {
           System.out.println(" ");
           runs = doAMergeIteration(runs);
       }
+    //   System.out.println("DEBUG:");
+    //   System.out.println(runs.size());
+    //   System.out.println(" ");
       return new SortScan(runs, comp);
    }
 
@@ -139,6 +142,8 @@ public class SortPlan implements Plan {
 
    private List<TempTable> doAMergeIteration(List<TempTable> runs) {
       List<TempTable> result = new ArrayList<TempTable>();
+      // if there are at least k elements in runs, merge continues
+      // else merge ends
       while (runs.size() > (k - 1)) { // at least k-1 runs
          TempTable p1 = runs.remove(0);
          TempTable p2 = runs.remove(0);
