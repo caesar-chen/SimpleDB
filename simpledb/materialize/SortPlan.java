@@ -39,7 +39,6 @@ public class SortPlan implements Plan {
     * and are passed into SortScan for final merging.
     * @see simpledb.query.Plan#open()
     */
-    // key method!!!
    public Scan open() {
       Scan src = p.open();
       List<TempTable> runs = splitIntoRuns(src);
@@ -153,11 +152,14 @@ public class SortPlan implements Plan {
              addMe = mergeTwoRuns(p1, p2);
          } else if (k == 3) {
              TempTable p3 = runs.remove(0);
-             addMe = mergeTwoRuns(mergeTwoRuns(p1, p2), p3);
+            // System.out.println("DEBUG:");
+            // System.out.println("Three temp table cases");
+            // System.out.println(" ");
+            addMe = mergeThreeRuns(p1, p2, p3);
          } else {
              TempTable p4 = runs.remove(0);
              TempTable p5 = runs.remove(0);
-             addMe = mergeTwoRuns(mergeTwoRuns(p1, p2), mergeTwoRuns(p4, p5));
+             addMe = mergeFourRuns(p1, p2, p4, p5);
          }
 
          result.add(addMe);
@@ -189,10 +191,9 @@ public class SortPlan implements Plan {
               TempTable ttp1 = runs.remove(0);
               TempTable ttp2 = runs.remove(0);
               TempTable ttp3 = runs.remove(0);
-              theFirst = mergeTwoRuns(mergeTwoRuns(ttp1, ttp2), ttp3);
+              theFirst = mergeThreeRuns(ttp1, ttp2, ttp3);
           }
           result.add(theFirst);
-          //print statement
           System.out.println("Merged Run");
           UpdateScan lastScan = theFirst.open();
           lastScan.beforeFirst();
@@ -228,6 +229,202 @@ public class SortPlan implements Plan {
          hasmore2 = copy(src2, dest);
       src1.close();
       src2.close();
+      dest.close();
+      return result;
+   }
+
+   /*helper method to merge three tables*/
+   private TempTable mergeThreeRuns(TempTable p1, TempTable p2, TempTable p3) {
+      Scan src1 = p1.open();
+      Scan src2 = p2.open();
+      Scan src3 = p3.open();
+      TempTable result = new TempTable(sch, tx);
+      UpdateScan dest = result.open();
+
+      boolean hasmore1 = src1.next();
+      boolean hasmore2 = src2.next();
+      boolean hasmore3 = src3.next();
+
+        while (hasmore1 && hasmore2 && hasmore3) {
+           if (comp.compare(src1, src2) < 0) {
+               if (comp.compare(src1, src3) < 0) {
+                   hasmore1 = copy(src1, dest);
+               } else {
+                   hasmore3 = copy(src3, dest);
+               }
+           }
+           else {
+               if (comp.compare(src2, src3) < 0) {
+                   hasmore2 = copy(src2, dest);
+               } else {
+                   hasmore3 = copy(src3, dest);
+               }
+           }
+        }
+
+        if (hasmore1 && hasmore2) {
+            while (hasmore1 && hasmore2) {
+                if (comp.compare(src1, src2) < 0) {
+                    hasmore1 = copy(src1, dest);
+                }
+                else {
+                    hasmore2 = copy(src2, dest);
+                }
+            }
+            if (hasmore1) {
+                while (hasmore1) {
+                    hasmore1 = copy(src1, dest);
+                }
+            }
+            else {
+                while (hasmore2) {
+                    hasmore2 = copy(src2, dest);
+                }
+            }
+        } else if (hasmore1 && hasmore3) {
+            while (hasmore1 && hasmore3) {
+                if (comp.compare(src1, src3) < 0) {
+                    hasmore1 = copy(src1, dest);
+                }
+                else {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+            if (hasmore1) {
+                while (hasmore1) {
+                    hasmore1 = copy(src1, dest);
+                }
+            }
+            else {
+                while (hasmore3) {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+        } else if (hasmore2 && hasmore3) {
+            while (hasmore2 && hasmore3) {
+                if (comp.compare(src2, src3) < 0) {
+                    hasmore2 = copy(src2, dest);
+                }
+                else {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+            if (hasmore2) {
+                while (hasmore2) {
+                    hasmore2 = copy(src2, dest);
+                }
+            }
+            else {
+                while (hasmore3) {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+        }
+
+      src1.close();
+      src2.close();
+      src3.close();
+      dest.close();
+      return result;
+   }
+
+   /*helper method to merge four tables*/
+   private TempTable mergeFourRuns(TempTable p1, TempTable p2, TempTable p3, TempTable p4) {
+      Scan src1 = p1.open();
+      Scan src2 = p2.open();
+      Scan src3 = p3.open();
+      Scan src4 = p4.open();
+      TempTable result = new TempTable(sch, tx);
+      UpdateScan dest = result.open();
+
+      boolean hasmore1 = src1.next();
+      boolean hasmore2 = src2.next();
+      boolean hasmore3 = src3.next();
+      boolean hasmore4 = src4.next();
+
+      while (hasmore1 && hasmore2 && hasmore3 && hasmore4) {
+
+      }
+
+        while (hasmore1 && hasmore2 && hasmore3) {
+           if (comp.compare(src1, src2) < 0) {
+               if (comp.compare(src1, src3) < 0) {
+                   hasmore1 = copy(src1, dest);
+               } else {
+                   hasmore3 = copy(src3, dest);
+               }
+           }
+           else {
+               if (comp.compare(src2, src3) < 0) {
+                   hasmore2 = copy(src2, dest);
+               } else {
+                   hasmore3 = copy(src3, dest);
+               }
+           }
+        }
+
+        if (hasmore1 && hasmore2) {
+            while (hasmore1 && hasmore2) {
+                if (comp.compare(src1, src2) < 0) {
+                    hasmore1 = copy(src1, dest);
+                }
+                else {
+                    hasmore2 = copy(src2, dest);
+                }
+            }
+            if (hasmore1) {
+                while (hasmore1) {
+                    hasmore1 = copy(src1, dest);
+                }
+            }
+            else {
+                while (hasmore2) {
+                    hasmore2 = copy(src2, dest);
+                }
+            }
+        } else if (hasmore1 && hasmore3) {
+            while (hasmore1 && hasmore3) {
+                if (comp.compare(src1, src3) < 0) {
+                    hasmore1 = copy(src1, dest);
+                }
+                else {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+            if (hasmore1) {
+                while (hasmore1) {
+                    hasmore1 = copy(src1, dest);
+                }
+            }
+            else {
+                while (hasmore3) {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+        } else if (hasmore2 && hasmore3) {
+            while (hasmore2 && hasmore3) {
+                if (comp.compare(src2, src3) < 0) {
+                    hasmore2 = copy(src2, dest);
+                }
+                else {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+            if (hasmore2) {
+                while (hasmore2) {
+                    hasmore2 = copy(src2, dest);
+                }
+            }
+            else {
+                while (hasmore3) {
+                    hasmore3 = copy(src3, dest);
+                }
+            }
+        }
+
+      src1.close();
+      src2.close();
+      src3.close();
       dest.close();
       return result;
    }
