@@ -9,7 +9,7 @@ public class mergeTest {
     public static void main(String[] args) {
         SimpleDB.init("studentdb");
         Transaction tx = new Transaction();
-        Plan p1 = new TablePlan("tt", tx);
+        Plan p1 = new TablePlan("messy", tx);
 
         // System.out.println("The initial content in the messy file");
         // TableScan testScan = (TableScan) p1.open();
