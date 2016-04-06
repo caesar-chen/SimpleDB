@@ -271,32 +271,12 @@ public class SortPlan implements Plan {
                     hasmore2 = copy(src2, dest);
                 }
             }
-            if (hasmore1) {
-                while (hasmore1) {
-                    hasmore1 = copy(src1, dest);
-                }
-            }
-            else {
-                while (hasmore2) {
-                    hasmore2 = copy(src2, dest);
-                }
-            }
         } else if (hasmore1 && hasmore3) {
             while (hasmore1 && hasmore3) {
                 if (comp.compare(src1, src3) < 0) {
                     hasmore1 = copy(src1, dest);
                 }
                 else {
-                    hasmore3 = copy(src3, dest);
-                }
-            }
-            if (hasmore1) {
-                while (hasmore1) {
-                    hasmore1 = copy(src1, dest);
-                }
-            }
-            else {
-                while (hasmore3) {
                     hasmore3 = copy(src3, dest);
                 }
             }
@@ -309,15 +289,20 @@ public class SortPlan implements Plan {
                     hasmore3 = copy(src3, dest);
                 }
             }
-            if (hasmore2) {
-                while (hasmore2) {
-                    hasmore2 = copy(src2, dest);
-                }
+        }
+
+        if (hasmore1) {
+            while (hasmore1) {
+                hasmore1 = copy(src1, dest);
             }
-            else {
-                while (hasmore3) {
-                    hasmore3 = copy(src3, dest);
-                }
+        }
+        else if (hasmore2) {
+            while (hasmore2) {
+                hasmore2 = copy(src2, dest);
+            }
+        } else {
+            while (hasmore3) {
+                hasmore3 = copy(src3, dest);
             }
         }
 
@@ -342,89 +327,200 @@ public class SortPlan implements Plan {
       boolean hasmore3 = src3.next();
       boolean hasmore4 = src4.next();
 
-      while (hasmore1 && hasmore2 && hasmore3 && hasmore4) {
+    //   while (hasmore1 && hasmore2)
+    //      if (comp.compare(src1, src2) < 0)
+    //      hasmore1 = copy(src1, dest);
+    //   else
+    //      hasmore2 = copy(src2, dest);
+    //
+    //   if (hasmore1)
+    //      while (hasmore1)
+    //      hasmore1 = copy(src1, dest);
+    //   else
+    //      while (hasmore2)
+    //      hasmore2 = copy(src2, dest);
 
+      while (hasmore1 && hasmore2 && hasmore3 && hasmore4) {
+          if (comp.compare(src1, src2) < 0) {
+              if (comp.compare(src3, src4) < 0) {
+                  if (comp.compare(src1, src3) < 0) {
+                      hasmore1 = copy(src1, dest);
+                  } else {
+                      hasmore3 = copy(src3, dest);
+                  }
+              } else {
+                  if (comp.compare(src1, src4) < 0) {
+                      hasmore1 = copy(src1, dest);
+                  } else {
+                      hasmore4 = copy(src4, dest);
+                  }
+              }
+          } else {
+              if (comp.compare(src3, src4) < 0) {
+                  if (comp.compare(src2, src3) < 0) {
+                      hasmore2 = copy(src2, dest);
+                  } else {
+                      hasmore3 = copy(src3, dest);
+                  }
+              } else {
+                  if (comp.compare(src2, src4) < 0) {
+                      hasmore2 = copy(src2, dest);
+                  } else {
+                      hasmore4 = copy(src4, dest);
+                  }
+              }
+          }
       }
 
-        while (hasmore1 && hasmore2 && hasmore3) {
-           if (comp.compare(src1, src2) < 0) {
-               if (comp.compare(src1, src3) < 0) {
-                   hasmore1 = copy(src1, dest);
-               } else {
-                   hasmore3 = copy(src3, dest);
-               }
-           }
-           else {
-               if (comp.compare(src2, src3) < 0) {
-                   hasmore2 = copy(src2, dest);
-               } else {
-                   hasmore3 = copy(src3, dest);
-               }
-           }
-        }
+      if (hasmore1 && hasmore2 && hasmore3) {
+          while (hasmore1 && hasmore2 && hasmore3) {
+             if (comp.compare(src1, src2) < 0) {
+                 if (comp.compare(src1, src3) < 0) {
+                     hasmore1 = copy(src1, dest);
+                 } else {
+                     hasmore3 = copy(src3, dest);
+                 }
+             }
+             else {
+                 if (comp.compare(src2, src3) < 0) {
+                     hasmore2 = copy(src2, dest);
+                 } else {
+                     hasmore3 = copy(src3, dest);
+                 }
+             }
+          }
+      } else if (hasmore1 && hasmore2 && hasmore4) {
+          while (hasmore1 && hasmore2 && hasmore4) {
+             if (comp.compare(src1, src2) < 0) {
+                 if (comp.compare(src1, src4) < 0) {
+                     hasmore1 = copy(src1, dest);
+                 } else {
+                     hasmore4 = copy(src4, dest);
+                 }
+             }
+             else {
+                 if (comp.compare(src2, src4) < 0) {
+                     hasmore2 = copy(src2, dest);
+                 } else {
+                     hasmore4 = copy(src4, dest);
+                 }
+             }
+          }
+      } else if (hasmore1 && hasmore3 && hasmore4) {
+          while (hasmore1 && hasmore3 && hasmore4) {
+             if (comp.compare(src1, src3) < 0) {
+                 if (comp.compare(src1, src4) < 0) {
+                     hasmore1 = copy(src1, dest);
+                 } else {
+                     hasmore4 = copy(src4, dest);
+                 }
+             }
+             else {
+                 if (comp.compare(src3, src4) < 0) {
+                     hasmore3 = copy(src3, dest);
+                 } else {
+                     hasmore4 = copy(src4, dest);
+                 }
+             }
+          }
+      } else if (hasmore2 && hasmore3 && hasmore4) {
+          while (hasmore2 && hasmore3 && hasmore4) {
+             if (comp.compare(src2, src3) < 0) {
+                 if (comp.compare(src2, src4) < 0) {
+                     hasmore2 = copy(src2, dest);
+                 } else {
+                     hasmore4 = copy(src4, dest);
+                 }
+             }
+             else {
+                 if (comp.compare(src3, src4) < 0) {
+                     hasmore3 = copy(src3, dest);
+                 } else {
+                     hasmore4 = copy(src4, dest);
+                 }
+             }
+          }
+      }
 
-        if (hasmore1 && hasmore2) {
-            while (hasmore1 && hasmore2) {
-                if (comp.compare(src1, src2) < 0) {
-                    hasmore1 = copy(src1, dest);
-                }
-                else {
-                    hasmore2 = copy(src2, dest);
-                }
-            }
-            if (hasmore1) {
-                while (hasmore1) {
-                    hasmore1 = copy(src1, dest);
-                }
-            }
-            else {
-                while (hasmore2) {
-                    hasmore2 = copy(src2, dest);
-                }
-            }
-        } else if (hasmore1 && hasmore3) {
-            while (hasmore1 && hasmore3) {
-                if (comp.compare(src1, src3) < 0) {
-                    hasmore1 = copy(src1, dest);
-                }
-                else {
-                    hasmore3 = copy(src3, dest);
-                }
-            }
-            if (hasmore1) {
-                while (hasmore1) {
-                    hasmore1 = copy(src1, dest);
-                }
-            }
-            else {
-                while (hasmore3) {
-                    hasmore3 = copy(src3, dest);
-                }
-            }
-        } else if (hasmore2 && hasmore3) {
-            while (hasmore2 && hasmore3) {
-                if (comp.compare(src2, src3) < 0) {
-                    hasmore2 = copy(src2, dest);
-                }
-                else {
-                    hasmore3 = copy(src3, dest);
-                }
-            }
-            if (hasmore2) {
-                while (hasmore2) {
-                    hasmore2 = copy(src2, dest);
-                }
-            }
-            else {
-                while (hasmore3) {
-                    hasmore3 = copy(src3, dest);
-                }
-            }
-        }
+      if (hasmore1 && hasmore2) {
+          while (hasmore1 && hasmore2) {
+              if (comp.compare(src1, src2) < 0) {
+                  hasmore1 = copy(src1, dest);
+              }
+              else {
+                  hasmore2 = copy(src2, dest);
+              }
+          }
+      } else if (hasmore1 && hasmore3) {
+          while (hasmore1 && hasmore3) {
+              if (comp.compare(src1, src3) < 0) {
+                  hasmore1 = copy(src1, dest);
+              }
+              else {
+                  hasmore3 = copy(src3, dest);
+              }
+          }
+      } else if (hasmore1 && hasmore4) {
+          while (hasmore1 && hasmore4) {
+              if (comp.compare(src1, src4) < 0) {
+                  hasmore1 = copy(src1, dest);
+              }
+              else {
+                  hasmore4 = copy(src4, dest);
+              }
+          }
+      } else if (hasmore2 && hasmore3) {
+          while (hasmore2 && hasmore3) {
+              if (comp.compare(src2, src3) < 0) {
+                  hasmore2 = copy(src2, dest);
+              }
+              else {
+                  hasmore3 = copy(src3, dest);
+              }
+          }
+      } else if (hasmore2 && hasmore4) {
+          while (hasmore2 && hasmore4) {
+              if (comp.compare(src2, src4) < 0) {
+                  hasmore2 = copy(src2, dest);
+              }
+              else {
+                  hasmore4 = copy(src4, dest);
+              }
+          }
+      } else if (hasmore3 && hasmore4) {
+          while (hasmore3 && hasmore4) {
+              if (comp.compare(src3, src4) < 0) {
+                  hasmore3 = copy(src3, dest);
+              }
+              else {
+                  hasmore4 = copy(src4, dest);
+              }
+          }
+      }
+
+      if (hasmore1) {
+          while (hasmore1) {
+              hasmore1 = copy(src1, dest);
+          }
+      }
+      else if (hasmore2) {
+          while (hasmore2) {
+              hasmore2 = copy(src2, dest);
+          }
+      } else if (hasmore3){
+          while (hasmore3) {
+              hasmore3 = copy(src3, dest);
+          }
+      } else {
+          while (hasmore4) {
+              hasmore4 = copy(src4, dest);
+          }
+      }
 
       src1.close();
       src2.close();
       src3.close();
+      src4.close();
       dest.close();
       return result;
    }
